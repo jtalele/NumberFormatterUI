@@ -91,28 +91,5 @@
     	</war>
     </target>
 	
-	<target name="prepForSBMCheckin" depends="war">          
-			<echo message="Preparing files for SBM checkin"/>
-			<delete includeemptydirs="true">
-				<fileset dir="${deploy.dir}" includes="${sbm.build.name}"/>
-			</delete>
-		    <mkdir dir="${sbm.dist.dir}" />
-		    <mkdir dir="${sbm.dist.app.dir}" />
-		    <mkdir dir="${sbm.dist.scripts.dir}" />
-		    <mkdir dir="${sbm.config.dir}" />
-		    <mkdir dir="${sbm.lib.dir}" />
-		    <copy todir="${sbm.dist.app.dir}">
-		  		<fileset dir="${deploy.dir}" includes="*.jar,*.war,*.ear" />
-		 	</copy>
-		 	<copy todir="${sbm.config.dir}">
-		   		<fileset dir="${basedir}/build/config/other"/>
-		 	</copy>
-		  	<copy todir="${sbm.dist.scripts.dir}">
-		 		<fileset dir="${build.scripts.other.dir}" />
-		  	</copy>
-		 	<tar destfile="${deploy.dir}\${sbm.build.name}" basedir="${sbm.dir}" />
-			<checksum file="${deploy.dir}\${sbm.build.name}" algorithm="md5" property="checksum.tar.md5"/>
-			<echo message="${checksum.tar.md5} *${sbm.build.name}" />
-		  	<delete dir="${sbm.dir}"/>  
-		</target>
+
 </project>
