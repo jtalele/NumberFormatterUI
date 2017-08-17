@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<indexhead></indexhead>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS3ME</title>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+</head>
+<script>
+
+$(document).ready(function () {
+
+
+	$("#clkHere").click(function () {
+    	document.getElementById("errorsection").innerHTML='';
+    	$('#resultoutputtable tr').remove();
+    	var firstNumber= $("#firstNumber").val();
+        var lastNumber= $("#lastNumber").val();
+        if(firstNumber<0 || firstNumber>200 || lastNumber<0 || lastNumber>200 || lastNumber < firstNumber){
+        	alert('please enter valid numbers');
+        	document.getElementById("errorsection").innerHTML='error occured';
+        	return false;
+        }
+		else{
+
+        dataString={};
+        dataString.firstNumber=firstNumber;
+        dataString.lastNumber=lastNumber;
+        clkHereResponse(dataString);
+        return true; }   });
+
+    function clkHereResponse( dataString) {
+        
+    	var urlLocation      = window.location.origin+window.location.pathname;
+		$.ajax({
+			type: "POST",
+			url: urlLocation+"FormatNumberServlet",
+			dataType: "html",
+			data: JSON.stringify(dataString),
+			contentType:'application/json',
+			headers: {
+				'Content-Type':'application/json'
+			},
+			success: function(data){
+				//alert('data is'+data);
+				var serviceResponse = JSON.parse(data);
+				var errorCode = serviceResponse.errorCode;
+				//alert('errorCode'+serviceResponse.resultArray);
+				if(errorCode==200){
+					var resultArray = serviceResponse.resultArray;
+					for(var i=0;resultArray.length;i++){
+				 		$('#resultoutputtable tbody').append('<tr class="child"><td>'+resultArray[i].number+
+				 			'</td><td>'+resultArray[i].code+'</td></tr>');
+					}
+					
+				}
+			},
+			error: function err(data) {
+				console.log("failed connecting to backend");
+				displayWelcomePageError();
+			}
+		});
+    	
+    }
+
+}
+);
+</script>
+<body>
+	First Number: <input type="text" id="firstNumber" value=""><br>
+	Last Number: <input type="text" id="lastNumber" value=""><br>
+	<input id="clkHere" type="submit" value="Submit">
+	<p>Click the "Submit" button</p>
+	
+	<erroroutput id="errorsection" style="color:red"></erroroutput>
+	<resultoutput id="resultoutput">
+	<table id="resultoutputtable"><tbody></tbody></table>
+	</resultoutput>
+</body>
+</html>

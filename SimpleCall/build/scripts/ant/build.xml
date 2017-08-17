@@ -1,0 +1,118 @@
+<project name="NumberFormatterUI" basedir="../../../" default="war">
+    <!-- environment settings -->
+    <property environment="env" />
+	<property file="${basedir}/build/scripts/ant/build.properties"/>
+	<tstamp>
+			<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss"/>
+	</tstamp>
+    <!-- local system paths -->
+    <property name="webroot.dir" value="${basedir}/WebContent"/>
+    <property name="webinf.dir"  value="${webroot.dir}/WEB-INF"/>
+	<property name="build.dir"   value="build"/>
+	<property name="dist.temp.dir"   value="${build.dir}/dist/temp"/>
+    <property name="deploy.dir"  value="${build.dir}/dist/final"/>
+	<property name="pvcsSrcName" value="${ant.project.name}.tar"/>
+	<property name="pvcsPropName" value="properties.tar"/>
+	<property name="lib.internal" value="${basedir}/build/lib/internal" />
+	<property name="lib.third_party" value="${basedir}/build/lib/third_party" />
+	<property name="war.name" value="${deploy.dir}/${ant.project.name}.war" />
+	<property name="config.dir" value="${build.dir}/config" />
+	 <!-- classpath for JSF -->
+	<path id="compile.classpath">
+		<fileset dir="${lib.third_party}">
+					<include name="*.jar"/>
+					<include name="*/*.jar"/>
+				</fileset>
+	</path>
+	
+	
+    <!-- Check timestamp on files -->
+    <target name="prepare">
+        <tstamp/>
+    </target>
+	<target name="all" depends="war" />
+
+    <!-- Copy any resource or configuration files -->
+    <target name="resources"
+    	description="Copy any resource or configuration files">
+        <copy todir="${webinf.dir}/classes" includeEmptyDirs="no">
+            <fileset dir="src">
+            <patternset>
+                <include name="**/*.conf"/>
+                <include name="**/*.properties"/>
+                <include name="**/*.xml"/>
+            </patternset>
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- Remove classes directory for clean build -->
+    <target name="clean"
+      description="Remove classes directory for clean build">
+	  <echo message="Cleaning folder structure at : ${TODAY}"/>
+    	<echo message="Catalina_home: ${env.CATALINA_HOME_8}"/>
+	  <echo message="Java_home: ${env.JAVA_HOME_8}"/>
+	  <echo message="JBOSS_HOME: ${env.JBOSS_HOME}"/>
+      <delete dir="${webinf.dir}/classes"/>
+      <delete dir="${dist.temp.dir}"/>
+      <mkdir dir="${webinf.dir}/classes"/>
+      <mkdir dir="${dist.temp.dir}"/>
+      <mkdir dir="${deploy.dir}"/>
+    </target>
+
+    <target name="compile" depends="clean,prepare,resources"
+    	description="Compile the project classes">
+        <javac debug="true" target="1.8" srcdir="src" destdir="${webinf.dir}/classes">
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
+	<target name="manifest">
+		  <manifest file="${webroot.dir}/META-INF/MANIFEST.MF">
+		    <attribute name="Built-By" value="${user.name}"/>
+		  	<attribute name="Specification-Title" value="SelfInstallUI"/>
+		  	<attribute name="Specification-Version" value="${ant.project.name}"/>
+		  	<attribute name="Implementation-Version" value="${sbm.build.name} ${TODAY}"/> 
+		  </manifest>
+		</target>
+    <!-- Create binary distribution -->
+    <target name="war" depends="compile" description="Create the war file for deployment">
+      <echo message=""/>
+   <!--   <delete file="${deploy.dir}/${ant.project.name}.war"/>-->
+      <delete quiet="true"  dir="${webinf.dir}/lib" />
+      <mkdir dir="${webinf.dir}/lib" />	
+      <copy todir="${webinf.dir}/lib" flatten="true" includeEmptyDirs="no">
+      	<fileset dir="${lib.third_party}" includes="*.jar,*/*.jar" excludes="junit.jar"/>
+      </copy>
+      
+    	<war basedir="${webroot.dir}" warfile="${deploy.dir}/${ant.project.name}.war" webxml="${webinf.dir}/web.xml">
+	      <exclude name="WEB-INF/${build.dir}/**"/>
+	      <exclude name="WEB-INF/src/**"/>
+	      <exclude name="WEB-INF/web.xml"/>
+    	</war>
+    </target>
+	
+	<target name="prepForSBMCheckin" depends="war">          
+			<echo message="Preparing files for SBM checkin"/>
+			<delete includeemptydirs="true">
+				<fileset dir="${deploy.dir}" includes="${sbm.build.name}"/>
+			</delete>
+		    <mkdir dir="${sbm.dist.dir}" />
+		    <mkdir dir="${sbm.dist.app.dir}" />
+		    <mkdir dir="${sbm.dist.scripts.dir}" />
+		    <mkdir dir="${sbm.config.dir}" />
+		    <mkdir dir="${sbm.lib.dir}" />
+		    <copy todir="${sbm.dist.app.dir}">
+		  		<fileset dir="${deploy.dir}" includes="*.jar,*.war,*.ear" />
+		 	</copy>
+		 	<copy todir="${sbm.config.dir}">
+		   		<fileset dir="${basedir}/build/config/other"/>
+		 	</copy>
+		  	<copy todir="${sbm.dist.scripts.dir}">
+		 		<fileset dir="${build.scripts.other.dir}" />
+		  	</copy>
+		 	<tar destfile="${deploy.dir}\${sbm.build.name}" basedir="${sbm.dir}" />
+			<checksum file="${deploy.dir}\${sbm.build.name}" algorithm="md5" property="checksum.tar.md5"/>
+			<echo message="${checksum.tar.md5} *${sbm.build.name}" />
+		  	<delete dir="${sbm.dir}"/>  
+		</target>
+</project>
